@@ -70,4 +70,10 @@ public class HttpRequestUtilsTest {
         Pair pair = HttpRequestUtils.parseHeader(header);
         assertThat(pair, is(new Pair("Content-Length", "59")));
     }
+
+    @Test
+    public void parseUrl() throws Exception {
+        String header = "GET /index.html HTTP/1.1";
+        assertEquals("/index.html", HttpRequestUtils.parseUrl(header));
+    }
 }
