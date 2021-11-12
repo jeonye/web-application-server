@@ -1,0 +1,4 @@
+GET /user/create?userId=jeonye&password=jeonye123&name=JeonHyejin HTTP/1.1
+Host: localhost:8080
+Connection: keep-alive
+Accept: */*
