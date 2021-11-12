@@ -47,7 +47,7 @@ public class RequestHandlerTest {
         sb.append("<meta charset=\"utf-8\"> \r\n");
         sb.append("<title>SLiPP Java Web Programming</title> \r\n");
         sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\"> \r\n");
-        sb.append("<link href=\"../css/bootstrap.min.css\" rel=\"stylesheet\"> \r\n");
+        sb.append("<link href=\"/webapp/css/bootstrap.min.css\" rel=\"stylesheet\"> \r\n");
         sb.append("</head> \r\n");
         sb.append("<body> \r\n");
 
