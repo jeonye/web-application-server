@@ -82,7 +82,7 @@ public class HttpRequest {
      */
     public String getPath() throws IOException {
         String path = HttpRequestUtils.parseUrl(this.header).split("\\?")[0];
-        log.info("[HttpRequest] [getPath] Path : {}", path);
+        log.info("[HttpRequest] [getPath] Header : {} / Path : {}", this.header, path);
 
         return path;
     }
