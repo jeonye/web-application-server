@@ -18,9 +18,7 @@ public class UserHandler {
      * @param paramMap
      * @return
      */
-    public static void addUser(Map<String, String> paramMap) throws UnsupportedEncodingException{
-        // HTTP 본문에 있는 데이터로 사용자 객체 생성
-        User newUser = parseUserInfo(paramMap);
+    public static void addUser(User newUser) {
         // 사용자 등록
         DataBase.addUser(newUser);
 
@@ -34,11 +32,9 @@ public class UserHandler {
      * @param paramMap
      * @return 사용자 존재 여부
      */
-    public static boolean confirmUser(Map<String, String> paramMap) throws UnsupportedEncodingException {
-        // HTTP 본문에 있는 데이터로 사용자 객체 생성
-        User loginUser = parseUserInfo(paramMap);
+    public static boolean confirmUser(User user) throws UnsupportedEncodingException {
         // 사용자 존재 여부 확인
-        return isSavedUser(loginUser);
+        return isSavedUser(user);
     }
 
     /**
@@ -67,20 +63,4 @@ public class UserHandler {
         return Boolean.parseBoolean(cookieMap.get("logined"));
     }
 
-    /**
-     * 사용자 객체 생성
-     * @param paramMap
-     * @return 사용자 정보
-     */
-    private static User parseUserInfo(Map<String, String> paramMap) throws UnsupportedEncodingException {
-        // 사용자 객체 생성
-        String userId = paramMap.get("userId");
-        String password = paramMap.get("password");
-        String name = paramMap.get("name");
-        String email = paramMap.get("email");
-        if(!"".equals(email) && email != null) {
-            email = URLDecoder.decode(email, "UTF-8");
-        }
-        return new User(userId, password, name, email);
-    }
 }

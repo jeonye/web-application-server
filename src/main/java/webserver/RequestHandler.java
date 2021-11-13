@@ -2,6 +2,7 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.util.*;
 
 import db.DataBase;
@@ -13,6 +14,7 @@ public class RequestHandler extends Thread {
     private static final Logger log = LoggerFactory.getLogger(RequestHandler.class);
 
     private Socket connection;
+    private String defaultPath = "/index.html";
 
     public RequestHandler(Socket connectionSocket) {
         this.connection = connectionSocket;
@@ -26,9 +28,7 @@ public class RequestHandler extends Thread {
             HttpRequest request = new HttpRequest(in);
             HttpResponse response = new HttpResponse(out);
 
-            if("/index.html".equals(request.getPath())) {
-                response.forward(request.getPath());
-            } else if("/user/create".equals(request.getPath())) {   // 회원가입
+            if("/user/create".equals(request.getPath())) {   // 회원가입
                 userJoin(request, response);
             } else if("/user/login".equals(request.getPath())) {   // 로그인
                 login(request, response);
@@ -49,8 +49,8 @@ public class RequestHandler extends Thread {
      * @return
      */
     private void userJoin(HttpRequest request, HttpResponse response) throws IOException{
-        UserHandler.addUser(request.paramMap);
-        response.sendRedirect("/index.html");
+        UserHandler.addUser(createUser(request));
+        response.sendRedirect(defaultPath);
     }
 
     /**
@@ -64,10 +64,10 @@ public class RequestHandler extends Thread {
 
         try {
             // 로그인 성공할 경우
-            if(UserHandler.confirmUser(request.paramMap)) {
+            if(UserHandler.confirmUser(createUser(request))) {
                 log.debug("Success Login");
                 response.addHeader("Set-Cookie", "logined=true");
-                url = "/index.html";
+                url = defaultPath;
             }
         } catch (UnsupportedEncodingException uee) {
             log.error(uee.getMessage());
@@ -75,7 +75,7 @@ public class RequestHandler extends Thread {
             log.error(ie.getMessage());
         }
 
-        response.forward(url);
+        response.sendRedirect(url);
     }
 
     /**
@@ -89,33 +89,14 @@ public class RequestHandler extends Thread {
 
         if(isLogined) { // 로그인 되어있는 경우
             ArrayList<User> users = new ArrayList<User>(DataBase.findAll());
-            String location = createHTML(users);
+            String html = writeHTML(users);
             // 처리 결과 응답
-            response.sendRedirect(location);
+            response.forwardBody(html);
         } else {
             log.debug("You need to log in");
             // 처리 결과 응답
             response.sendRedirect("/user/login.html");
         }
-    }
-
-    /**
-     * HTML 파일 생성
-     * @param
-     * @return 생성한 HTML 파일 명
-     */
-    private String createHTML(ArrayList<User> users) throws IOException {
-        // HTML 파일 생성
-        String filename = "/user/user_list.html";
-        File file = new File("./webapp" + filename);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-
-        // HTML 내용 작성
-        writer.write(writeHTML(users));
-
-        writer.close();
-
-        return filename;
     }
 
     /**
@@ -134,7 +115,7 @@ public class RequestHandler extends Thread {
         sb.append("<meta charset=\"utf-8\"> \r\n");
         sb.append("<title>SLiPP Java Web Programming</title> \r\n");
         sb.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\"> \r\n");
-        sb.append("<link href=\"/webapp/css/bootstrap.min.css\" rel=\"stylesheet\"> \r\n");
+        sb.append("<link href=\"/css/bootstrap.min.css\" rel=\"stylesheet\"> \r\n");
         sb.append("</head> \r\n");
         sb.append("<body> \r\n");
 
@@ -164,6 +145,23 @@ public class RequestHandler extends Thread {
         sb.append("</html> \r\n");
 
         return sb.toString();
+    }
+
+    private static User createUser(HttpRequest request) throws IOException {
+        // 사용자 객체 생성
+        String userId = request.getParameter("userId");
+        String password = request.getParameter("password");
+        String name = request.getParameter("name");
+        String email = request.getParameter("email");
+
+        if(!"".equals(name) && name != null) {
+            name = URLDecoder.decode(name, "UTF-8");
+        }
+
+        if(!"".equals(email) && email != null) {
+            email = URLDecoder.decode(email, "UTF-8");
+        }
+        return new User(userId, password, name, email);
     }
 
 }

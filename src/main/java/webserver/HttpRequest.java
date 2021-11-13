@@ -6,6 +6,7 @@ package webserver;
 3. GET과 POST 메소드에 따라 전달되는 인자를 Map<String, String>에 저장해 관리하고 getParameter("인자이름") 메소드를 통해 접근 가능
  */
 
+import constants.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
@@ -21,7 +22,9 @@ import java.util.Map;
 public class HttpRequest {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRequest.class);
-    String header = "";
+    private HttpMethod httpMethod;
+
+    String requestLine = "";
     Map<String, String> headerMap = new HashMap<String, String>();
     Map<String, String> paramMap = new HashMap<String, String>();
 
@@ -30,10 +33,10 @@ public class HttpRequest {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 
             String header = br.readLine();
-            this.header = header;
+            this.requestLine = header;
             log.debug("[HttpRequest] header : {}", header);
 
-            if (this.header == null) {
+            if (header == null) {
                 return;
             }
 
@@ -49,13 +52,15 @@ public class HttpRequest {
             }
 
             // 본문 데이터 조회
-            if("GET".equals(getMethod())) {
-                String url = this.header.split(" ")[1];
-                String urlParam = url.substring(url.indexOf("?")+1);
-                this.paramMap = HttpRequestUtils.parseQueryString(urlParam);
-            }
-
-            if("POST".equals(getMethod())) {
+            httpMethod = HttpMethod.valueOf(getMethod());
+            if(httpMethod.isGET()) {
+                String url = this.requestLine.split(" ")[1];
+                int index = url.indexOf("?");
+                if(index != -1) {
+                    String urlParam = url.substring(url.indexOf("?")+1);
+                    this.paramMap = HttpRequestUtils.parseQueryString(urlParam);
+                }
+            } else if(httpMethod.isPOST()) {
                 String bodyData = IOUtils.readData(br, Integer.parseInt(getHeader("Content-Length")));
                 this.paramMap = HttpRequestUtils.parseQueryString(bodyData);
             }
@@ -71,8 +76,8 @@ public class HttpRequest {
      * @return String
      */
     public String getMethod() throws IOException {
-        log.debug("[HttpRequest] [getMethod] header : {}", this.header);
-        return HttpRequestUtils.parseMethod(this.header);
+        log.debug("[HttpRequest] [getMethod] header : {}", this.requestLine);
+        return HttpRequestUtils.parseMethod(this.requestLine);
     }
 
     /**
@@ -81,8 +86,20 @@ public class HttpRequest {
      * @return String
      */
     public String getPath() throws IOException {
-        String path = HttpRequestUtils.parseUrl(this.header).split("\\?")[0];
-        log.info("[HttpRequest] [getPath] Header : {} / Path : {}", this.header, path);
+        String url = this.requestLine.split(" ")[1];
+        String path = url;
+
+        httpMethod = HttpMethod.valueOf(getMethod());
+        if(httpMethod.isGET()) {
+            int index = url.indexOf("?");
+            if(index == -1) {
+                path = url;
+            } else {
+                path = url.substring(0, index);
+            }
+        }
+
+        log.info("[HttpRequest] [getPath] Header : {} / Path : {}", this.requestLine, path);
 
         return path;
     }

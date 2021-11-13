@@ -48,6 +48,14 @@ public class HttpResponse {
         }
     }
 
+    public void forwardBody(String body) {
+        byte[] contents = body.getBytes();
+        headerMap.put("Content-Type", "text/html;charset=utf-8");
+        headerMap.put("Content-Length", String.valueOf(contents.length));
+        response200Header();
+        responseBody(contents);
+    }
+
     private void response200Header() {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
